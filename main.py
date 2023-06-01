@@ -41,3 +41,11 @@ for extension, folder_name in extensions.items():
         dst = os.path.join(path, folder_name, basename)
         print(f"[*] Перенесён файл '{file}' в {dst}")
         shutil.move(file, dst)
+            
+# Remove empty directories
+for root, dirs, _ in os.walk(path, topdown=False):
+    for dir_name in dirs:
+        folder_path = os.path.join(root, dir_name)
+        if not os.listdir(folder_path):
+            os.rmdir(folder_path)
+            print(f"[-] Removed empty folder '{folder_path}'.")
