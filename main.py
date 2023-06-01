@@ -1,7 +1,9 @@
 import os
 import glob
 import shutil
+import sys
 import transliterate
+
 
 extensions = {
     "jpg": "images",
@@ -62,11 +64,11 @@ def process_files(path):
 
 
 if __name__ == "__main__":
-    # Жорстко закодований шлях до теки
-    path = r"C:\Users\VLAD\Documents\MyFolder"
+    if len(sys.argv) != 2:
+        print("Потрібно вказати шлях до теки як аргумент командного рядка.")
+        sys.exit(1)
 
-    # Транслітерація шляху до теки
+    path = sys.argv[1]
     path = transliterate_path(path)
-
-    # Починаємо обробку файлів
     process_files(path)
+
