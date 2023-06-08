@@ -55,7 +55,7 @@ def process_folder(folder_path):
 
 
 if __name__ == '__main__':
-    target_folder = "C:/Users/VLAD/Desktop/я смог это сделать"
+    target_folder = "Путь к папке"
 
     create_category_folders(target_folder)
     process_folder(target_folder)
