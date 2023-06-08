@@ -1,74 +1,74 @@
 import os
-import glob
 import shutil
 import sys
-import transliterate
 
-
-extensions = {
-    "jpg": "images",
-    "jpeg": "images",
-    "png": "images",
-    "svg": "images",
-    "pdf": "doc",
-    "xlsx": "doc",
-    "zip": "archive",
-    "gz": "archive",
-    "tar": "archive",
-    "doc": "doc",
-    "docx": "doc",
-    "txt": "doc",
-    "pptx": "doc",
-    "mp3": "audio",
-    "wav": "audio",
-    "ogg": "audio",
-    "amr": "audio",
-    "mp4": "video",
-    "avi": "video",
-    "mov": "video",
-    "mkv": "video",
+CATEGORIES = {
+    'images': ['JPEG', 'PNG', 'JPG', 'SVG'],
+    'videos': ['AVI', 'MP4', 'MOV', 'MKV'],
+    'documents': ['DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX'],
+    'audio': ['MP3', 'OGG', 'WAV', 'AMR'],
+    'archives': ['ZIP', 'GZ', 'TAR']
 }
 
+unknown_extensions = []
+known_extensions = []
 
-def transliterate_path(path):
-    return transliterate.translit(path, reversed=True)
+
+def create_category_folders(folder_path):
+    for category in CATEGORIES.keys():
+        category_folder = os.path.join(folder_path, category)
+        if not os.path.exists(category_folder):
+            os.makedirs(category_folder)
 
 
-def process_files(path):
-    for extension, folder_name in extensions.items():
-        files = glob.glob(os.path.join(path, f"*.{extension}"))
-        print(f"[*] Знайдено {len(files)} файлів з розширенням {extension}.")
+def process_folder(folder_path):
+    global known_extensions
+    global unknown_extensions
 
-        if not os.path.isdir(os.path.join(path, folder_name)) and files:
-            os.mkdir(os.path.join(path, folder_name))
-            print(f"[+] Створено теку {folder_name}.")
-
+    for root, _, files in os.walk(folder_path):
         for file in files:
-            basename = os.path.basename(file)
-            dst_folder = os.path.join(path, folder_name)
-            dst = os.path.join(dst_folder, basename)
-            print(f"[*] Переміщено файл '{file}' до {dst}")
-            shutil.move(file, dst)
+            file_path = os.path.join(root, file)
+            _, extension = os.path.splitext(file_path)
+            extension = extension.upper()[1:] if extension else ''  # Убираем точку из расширения
 
-    for root, dirs, _ in os.walk(path, topdown=False):
-        for dir_name in dirs:
-            folder_path = os.path.join(root, dir_name)
-            process_files(folder_path)
+            known_category = None
+            for category, extensions in CATEGORIES.items():
+                if extension in extensions:
+                    known_category = category
+                    break
 
-    for root, dirs, _ in os.walk(path, topdown=False):
-        for dir_name in dirs:
-            folder_path = os.path.join(root, dir_name)
-            if not os.listdir(folder_path):
-                os.rmdir(folder_path)
-                print(f"[-] Видалено порожню теку '{folder_path}'.")
+            if known_category:
+                known_extensions.append(extension)
+                new_file_name = file if '.' in file else file + extension
+                new_file_path = os.path.join(folder_path, known_category, new_file_name)
+                os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
+                shutil.move(file_path, new_file_path)
+            else:
+                unknown_extensions.append(extension)
+
+    # Удаляем пустые папки
+    for root, dirs, _ in os.walk(folder_path, topdown=False):
+        for dir in dirs:
+            dir_path = os.path.join(root, dir)
+            if not os.listdir(dir_path):
+                os.rmdir(dir_path)
 
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Потрібно вказати шлях до теки як аргумент командного рядка.")
-        sys.exit(1)
+if __name__ == '__main__':
+    target_folder = "C:/Users/VLAD/Desktop/я смог это сделать"
 
-    path = sys.argv[1]
-    path = transliterate_path(path)
-    process_files(path)
+    create_category_folders(target_folder)
+    process_folder(target_folder)
 
+    print('Список файлов в каждой категории:')
+    for category in CATEGORIES.keys():
+        category_path = os.path.join(target_folder, category)
+        if os.path.exists(category_path):
+            files = os.listdir(category_path)
+            print(f'{category}: {", ".join(files)}')
+
+    print('Перечень известных расширений:')
+    print(', '.join(set(known_extensions)))
+
+    print('Перечень неизвестных расширений:')
+    print(', '.join(set(unknown_extensions)))
