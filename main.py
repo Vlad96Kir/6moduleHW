@@ -29,7 +29,7 @@ def process_folder(folder_path):
         for file in files:
             file_path = os.path.join(root, file)
             _, extension = os.path.splitext(file_path)
-            extension = extension.upper()[1:] if extension else ''  # Убираем точку из расширения
+            extension = extension.upper()[1:] if extension else ''
 
             known_category = None
             for category, extensions in CATEGORIES.items():
@@ -45,30 +45,31 @@ def process_folder(folder_path):
                 shutil.move(file_path, new_file_path)
             else:
                 unknown_extensions.append(extension)
+                shutil.move(file_path, os.path.join(folder_path, file))
 
-    # Удаляем пустые папки
+    # Remove empty directories
     for root, dirs, _ in os.walk(folder_path, topdown=False):
         for dir in dirs:
             dir_path = os.path.join(root, dir)
             if not os.listdir(dir_path):
-                os.rmdir(dir_path)
+                shutil.rmtree(dir_path)
 
 
 if __name__ == '__main__':
-    target_folder = "Путь к папке"
+    target_folder = "C:/Users/VLAD/Desktop/отсортировать"
 
     create_category_folders(target_folder)
     process_folder(target_folder)
 
-    print('Список файлов в каждой категории:')
+    print('--- Files in Each Category ---')
     for category in CATEGORIES.keys():
         category_path = os.path.join(target_folder, category)
         if os.path.exists(category_path):
             files = os.listdir(category_path)
             print(f'{category}: {", ".join(files)}')
 
-    print('Перечень известных расширений:')
+    print('--- Known Extensions ---')
     print(', '.join(set(known_extensions)))
 
-    print('Перечень неизвестных расширений:')
+    print('--- Unknown Extensions ---')
     print(', '.join(set(unknown_extensions)))
