@@ -1,13 +1,15 @@
 import os
 import shutil
 import sys
+from pyunpack import Archive
+import patoolib
 
 CATEGORIES = {
     'images': ['JPEG', 'PNG', 'JPG', 'SVG'],
     'videos': ['AVI', 'MP4', 'MOV', 'MKV'],
     'documents': ['DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX'],
     'audio': ['MP3', 'OGG', 'WAV', 'AMR'],
-    'archives': ['ZIP', 'GZ', 'TAR']
+    'archives': ['ZIP', 'GZ', 'TAR', 'RAR']
 }
 
 unknown_extensions = []
@@ -55,11 +57,39 @@ def process_folder(folder_path):
                 shutil.rmtree(dir_path)
 
 
+def extract_archives(folder_path):
+    for root, _, files in os.walk(folder_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            _, extension = os.path.splitext(file_path)
+            extension = extension.upper()[1:] if extension else ''
+            if extension in ['ZIP', 'RAR']:
+                destination_folder = os.path.join(root, os.path.splitext(file)[0])
+                os.makedirs(destination_folder, exist_ok=True)
+                try:
+                    if extension == 'ZIP':
+                        Archive(file_path).extractall(destination_folder)
+                    elif extension == 'RAR':
+                        patoolib.extract_archive(file_path, outdir=destination_folder)
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+
+                except Exception as e:
+                    print(f"Error extracting archive '{file}': {str(e)}")
+
+
 if __name__ == '__main__':
-    target_folder = "C:/Users/VLAD/Desktop/отсортировать"
+    try:
+        target_folder = sys.argv[1]
+    except IndexError:
+        print("No path to folder")
+        sys.exit(-1)
 
     create_category_folders(target_folder)
     process_folder(target_folder)
+    extract_archives(target_folder)
 
     print('--- Files in Each Category ---')
     for category in CATEGORIES.keys():
